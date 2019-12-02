@@ -46,7 +46,12 @@ function updatePage(pages, pn) {
     window.location.href = "index.html#pn=" + pn
     pagetext.innerText = '第 ' + pn + ' 页，共 ' + px + ' 页'
     span.innerHTML = "";
-    span.scrollTo(0, 0);
+    try {
+        span.scrollTo(0, 0);
+    }
+    catch (e) {
+        console.log('浏览器不支持滚动');
+    }
     for (let i = 0; i < pages[pn - 1].length; ++i) {
         createPost(pages[pn - 1][i]);
     }
