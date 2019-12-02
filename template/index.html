@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>
+        贴吧下载器
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1 id="title">
+        贴吧下载器
+    </h1>
+    <hr>
+    <span id="posts"></span>
+    <input type="button" class="btn" onclick="prev()" value="上一页" id="prev" disabled="true">
+    <input type="button" class="btn" onclick="next()" value="下一页" id="next">
+    <div id="pagenum"></div>
+    <input type="number" class="input" size="1" value="1" min="1" id="jump" required="true">
+    <input type="submit" class="btn" value="跳页" onclick="jump(pages)">
+    <script src="manager.js"></script>
+    <script src="data.js"></script>
+    <script>
+        function next() {
+            ++pn;
+            setPage(pages, pn);
+        }
+        function prev() {
+            --pn;
+            setPage(pages, pn);
+        }
+        function jump() {
+            pn = document.getElementById("jump").value;
+            setPage(pages, pn);
+        }
+    </script>
+</body>
+
+</html>
