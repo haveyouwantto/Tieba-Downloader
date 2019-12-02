@@ -13,7 +13,7 @@ usernames = []
 smiley = []
 
 no = int(input('贴子id: '))
-see_lz = 0
+see_lz = int(input('只看楼主: '))
 page = 1
 max_page = int(input('页数: '))
 
