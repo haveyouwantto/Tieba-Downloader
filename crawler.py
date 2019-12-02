@@ -92,14 +92,14 @@ while page <= max_page:
                 post['content']['content'], "html.parser")
 
             # 链接
-            print('转换链接: '+j.attrs['href'])
             for j in innerSoup.find_all(class_="j-no-opener-url"):
+                print('转换链接: '+j.attrs['href'])
                 j.attrs['href'] = "redirect.html?url=" + urllib.parse.quote(j.text)
             post['content']['content'] = str(innerSoup)
 
-            print('转换@人: '+j.attrs['href'])
             # @人
             for j in innerSoup.find_all(class_="at"):
+                print('转换@人: '+j.attrs['href'])
                 j.attrs['href'] = 'http://tieba.baidu.com/home/main?un=' + j.attrs['username']
             post['content']['content'] = str(innerSoup)
 
