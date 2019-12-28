@@ -33,6 +33,8 @@
         }
         function jump() {
             pn = document.getElementById("jump").value;
+            if (pn > px) pn = px;
+            else if (pn < 0) pn = 0;
             setPage(pages, pn);
         }
     </script>

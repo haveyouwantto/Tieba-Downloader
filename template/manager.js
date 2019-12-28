@@ -75,6 +75,8 @@ function createFloorField(postData) {
     floor.appendChild(createSenderName(postData));
     floor.appendChild(createFloorNum(postData));
     floor.appendChild(createTextField(postData));
+
+    if (postData.comments != null) floor.appendChild(createMidFloor(postData));
     return floor;
 }
 
@@ -114,4 +116,22 @@ function createAvatar(postData) {
     image.setAttribute('class', 'avatar');
     image.setAttribute('src', 'img/avatars/' + postData.author.user_name + '.jpg');
     return image;
+}
+
+
+function createMidFloor(postData) {
+    let midfloor = document.createElement('span');
+    midfloor.setAttribute('class', 'midfloor');
+    for (let i = 0; i < postData.comments.comment_info.length; i++) {
+        let element = postData.comments.comment_info[i];
+        midfloor.appendChild(createMidPost(element.username + ": " + element.content));
+    }
+    return midfloor;
+}
+
+function createMidPost(string) {
+    let midpost = document.createElement('div');
+    midpost.setAttribute('class', 'midpost');
+    midpost.innerHTML = string;
+    return midpost;
 }
