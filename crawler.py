@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import urllib.parse
+import argparse
 
 import imagedownload
 
@@ -76,7 +77,9 @@ def convert_link(content, folder, postimgdir, smileydir):
 
 
 def download(no, see_lz, max_page):
-    pages = []
+    thread = {
+        'pages' : []
+    }
     usernames = []
     smiley = []
 
@@ -106,6 +109,9 @@ def download(no, see_lz, max_page):
         response = r.text  # 服务器返回响应
 
         soup = BeautifulSoup(response, "html.parser")
+
+        thread['title'] = soup.select('#j_core_title_wrap > h3')[
+            0].attrs['title']
 
         for i in soup.find_all(class_='l_post l_post_bright j_l_post clearfix'):
             post = json.loads(i.attrs['data-field'])
@@ -160,7 +166,7 @@ def download(no, see_lz, max_page):
 
         for i in midfloor['data']['user_list']:
 
-            element=midfloor['data']['user_list'][i]
+            element = midfloor['data']['user_list'][i]
             username = element['user_name']
 
             try:
@@ -169,13 +175,13 @@ def download(no, see_lz, max_page):
                         username, element['portrait'], folder + avatardir + username + '.jpg')
                     usernames.append(username)
             except:
-                nickname=element['nickname']
+                nickname = element['nickname']
                 if nickname not in usernames:
                     imagedownload.download_avatar(
                         nickname, element['portrait'], folder + avatardir + nickname + '.jpg')
                     usernames.append(nickname)
 
-        pages.append(posts)
+        thread['pages'].append(posts)
 
         page += 1
 
@@ -185,12 +191,18 @@ def download(no, see_lz, max_page):
         shutil.copyfile('template/' + file, folder + file)
 
     f = open(folder + 'data.js', 'w')
-    f.write('let pages=')
-    f.write(json.dumps(pages))
-    f.write(';let pn=1;let px=pages.length;document.getElementById("jump").max=px;init(pages);')
+    f.write('let thread=')
+    f.write(json.dumps(thread))
+    f.write(';let pn=1;let px=thread.pages.length;document.getElementById("jump").max=px;init(thread);')
     f.close()
     print('下载完成')
 
 
 if __name__ == "__main__":
-    download(3758753964, 1, 95)
+    parser=argparse.ArgumentParser()
+    parser.add_argument('-t','--tid',type=str,help='thread id',required=True)
+    parser.add_argument('-s','--see_lz',type=int,help='see lz. 0 or 1. default=0.',default=0)
+    parser.add_argument('-p','--pages',type=int,help='pages to download. default=1.',default=1)
+    args=parser.parse_args()
+
+    download(args.tid,args.see_lz,args.pages)

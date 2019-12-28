@@ -14,12 +14,14 @@ function parseArguments() {
     }
 }
 
-function init(pages) {
+function init(thread) {
+    document.getElementById('title').innerText = thread.title;
+    document.title += ' - ' + thread.title;
     let arguments = parseArguments();
-    if (arguments.pn == undefined) setPage(pages, 1);
+    if (arguments.pn == undefined) setPage(thread.pages, 1);
     else {
         pn = arguments.pn;
-        setPage(pages, arguments.pn);
+        setPage(thread.pages, arguments.pn);
     }
 }
 
@@ -153,7 +155,7 @@ function createExpandButton(postData) {
     expand.innerText = '\u25bc 展开';
     expand.setAttribute('value', postData.content.post_id + '-mid');
     expand.setAttribute('id', postData.content.post_id + '-btn');
-    expand.setAttribute('class','expand');
+    expand.setAttribute('class', 'expand');
     expand.setAttribute('onclick', 'expand("' + postData.content.post_id + '-btn");');
     expand.setAttribute('expanded', '0');
     return expand;
