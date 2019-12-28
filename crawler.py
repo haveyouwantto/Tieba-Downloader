@@ -158,6 +158,23 @@ def download(no, see_lz, max_page):
                     print('添加id为{0}的楼中楼回复'.format(i))
                     posts[j]['comments'] = midfloor['data']['comment_list'][i]
 
+        for i in midfloor['data']['user_list']:
+
+            element=midfloor['data']['user_list'][i]
+            username = element['user_name']
+
+            try:
+                if username not in usernames:
+                    imagedownload.download_avatar(
+                        username, element['portrait'], folder + avatardir + username + '.jpg')
+                    usernames.append(username)
+            except:
+                nickname=element['nickname']
+                if nickname not in usernames:
+                    imagedownload.download_avatar(
+                        nickname, element['portrait'], folder + avatardir + nickname + '.jpg')
+                    usernames.append(nickname)
+
         pages.append(posts)
 
         page += 1

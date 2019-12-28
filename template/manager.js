@@ -47,13 +47,27 @@ function updatePage(pages, pn) {
     pagetext.innerText = '第 ' + pn + ' 页，共 ' + px + ' 页'
     span.innerHTML = "";
     try {
-        span.scrollTo(0, 0);
+        span.scrollTop = 0;
     }
     catch (e) {
         console.log('浏览器不支持滚动');
     }
     for (let i = 0; i < pages[pn - 1].length; ++i) {
         createPost(pages[pn - 1][i]);
+        setExpand(i, pages[pn - 1][i]);
+    }
+
+}
+
+function setExpand(i, postData) {
+
+    let floors = document.getElementsByClassName('floor');
+    let floor = floors[i];
+    let midfloor = floor.children[3];
+    if (midfloor != null) {
+        if (midfloor.clientHeight != midfloor.scrollHeight) {
+            floor.appendChild(createExpandButton(postData));
+        }
     }
 }
 
@@ -61,6 +75,7 @@ function createPost(postData) {
     let span = document.getElementById('posts');
     let chatbox = document.createElement('div');
     chatbox.setAttribute('class', 'post');
+    chatbox.setAttribute('id', postData.content.post_id);
 
     chatbox.appendChild(createSender(postData));
     chatbox.appendChild(createFloorField(postData));
@@ -76,7 +91,11 @@ function createFloorField(postData) {
     floor.appendChild(createFloorNum(postData));
     floor.appendChild(createTextField(postData));
 
-    if (postData.comments != null) floor.appendChild(createMidFloor(postData));
+    if (postData.comments != null) {
+        let midfloor = createMidFloor(postData);
+        console.log(midfloor.clientHeight, midfloor.scrollHeight);
+        floor.appendChild(midfloor);
+    }
     return floor;
 }
 
@@ -118,20 +137,54 @@ function createAvatar(postData) {
     return image;
 }
 
-
 function createMidFloor(postData) {
     let midfloor = document.createElement('span');
     midfloor.setAttribute('class', 'midfloor');
+    midfloor.setAttribute('id', postData.content.post_id + '-mid');
     for (let i = 0; i < postData.comments.comment_info.length; i++) {
         let element = postData.comments.comment_info[i];
-        midfloor.appendChild(createMidPost(element.username + ": " + element.content));
+        midfloor.appendChild(createMidPost(element));
     }
     return midfloor;
 }
 
-function createMidPost(string) {
+function createExpandButton(postData) {
+    let expand = document.createElement('a');
+    expand.innerText = '\u25bc 展开';
+    expand.setAttribute('value', postData.content.post_id + '-mid');
+    expand.setAttribute('id', postData.content.post_id + '-btn');
+    expand.setAttribute('class','expand');
+    expand.setAttribute('onclick', 'expand("' + postData.content.post_id + '-btn");');
+    expand.setAttribute('expanded', '0');
+    return expand;
+}
+
+function createMidPost(commentInfo) {
     let midpost = document.createElement('div');
     midpost.setAttribute('class', 'midpost');
-    midpost.innerHTML = string;
+    midpost.setAttribute('id', commentInfo.comment_id);
+    midpost.appendChild(createMidAvatar(commentInfo.username));
+    midpost.innerHTML += commentInfo.username + ": " + commentInfo.content;
     return midpost;
+}
+
+function createMidAvatar(username) {
+    let image = document.createElement('img');
+    image.setAttribute('class', 'avatar');
+    image.setAttribute('src', 'img/avatars/' + username + '.jpg');
+    return image;
+}
+
+function expand(id) {
+    let element = document.getElementById(id);
+    let toExpand = document.getElementById(element.getAttribute('value'));
+    if (element.getAttribute('expanded') == '0') {
+        element.setAttribute('expanded', '1');
+        element.innerText = '\u25b2 收起';
+        toExpand.style.maxHeight = 'min-content';
+    } else {
+        element.setAttribute('expanded', '0');
+        element.innerText = '\u25bc 展开';
+        toExpand.style.maxHeight = '25vh';
+    }
 }
