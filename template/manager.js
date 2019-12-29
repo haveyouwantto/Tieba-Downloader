@@ -1,3 +1,5 @@
+let index = {};
+
 function parseArguments() {
     try {
         let href = window.location.href.split("#");
@@ -90,21 +92,36 @@ function createFloorField(postData) {
     floor.setAttribute('class', 'floor');
 
     floor.appendChild(createSenderName(postData));
-    floor.appendChild(createFloorNum(postData));
+    floor.appendChild(createFloorInfo(postData));
     floor.appendChild(createTextField(postData));
 
     if (postData.comments != null) {
         let midfloor = createMidFloor(postData);
-        console.log(midfloor.clientHeight, midfloor.scrollHeight);
         floor.appendChild(midfloor);
     }
     return floor;
 }
 
+function createFloorInfo(postData) {
+    let num = document.createElement('div');
+    num.setAttribute('class', 'floorinfo');
+    num.appendChild(createFloorNum(postData));
+    num.appendChild(createTime(postData));
+    return num;
+}
+
+function createTime(postData) {
+    let time = document.createElement('div');
+    time.setAttribute('class', 'floortime');
+    let textNode = document.createTextNode(postData.time);
+    time.appendChild(textNode);
+    return time;
+}
+
 function createFloorNum(postData) {
     let num = document.createElement('div');
     num.setAttribute('class', 'floornum');
-    let textNode = document.createTextNode("第 " + postData.content.post_no + " 楼");
+    let textNode = document.createTextNode(postData.content.post_no + " 楼");
     num.appendChild(textNode);
     return num;
 }
@@ -142,11 +159,14 @@ function createAvatar(postData) {
 function createMidFloor(postData) {
     let midfloor = document.createElement('span');
     midfloor.setAttribute('class', 'midfloor');
+    midfloor.setAttribute('page', '1');
+    midfloor.setAttribute('maxpage', postData.comments.comment_info.length);
     midfloor.setAttribute('id', postData.content.post_id + '-mid');
-    for (let i = 0; i < postData.comments.comment_info.length; i++) {
-        let element = postData.comments.comment_info[i];
-        midfloor.appendChild(createMidPost(element));
-    }
+    midfloor.setAttribute('index', postData.content.post_id + '-mid');
+    index[postData.content.post_id + '-mid'] = postData;
+
+    updateMidPosts(midfloor, 1);
+    // [parseInt(midfloor.getAttribute('page'))-1]
     return midfloor;
 }
 
@@ -187,6 +207,68 @@ function expand(id) {
     } else {
         element.setAttribute('expanded', '0');
         element.innerText = '\u25bc 展开';
-        toExpand.style.maxHeight = '25vh';
+        toExpand.style.maxHeight = '180px';
     }
+}
+
+function updateMidFloor(id, operation) {
+    let element = document.getElementById(id);
+    let toUpdate = document.getElementById(element.getAttribute('value'));
+    let currpage = parseInt(toUpdate.getAttribute('page'));
+    let maxpage = parseInt(toUpdate.getAttribute('maxpage'));
+
+    switch (operation) {
+        case '+':
+            if (currpage < maxpage) {
+                toUpdate.innerHTML = '';
+                toUpdate.setAttribute('page', currpage + 1);
+                updateMidPosts(toUpdate, currpage + 1);
+            }
+            break;
+        case '-':
+            if (currpage > 1) {
+                toUpdate.innerHTML = '';
+                toUpdate.setAttribute('page', currpage - 1);
+                updateMidPosts(toUpdate, currpage - 1);
+            }
+            break;
+    }
+}
+
+function updateMidPosts(midfloor, page) {
+    let postData = index[midfloor.getAttribute('index')];
+    let midPageControl = document.createElement('div');
+    midPageControl.setAttribute('class', 'midpagecontrol');
+    for (let i = 0; i < postData.comments.comment_info[page - 1].length; i++) {
+        let element = postData.comments.comment_info[page - 1][i];
+        midfloor.appendChild(createMidPost(element));
+    }
+    let maxpage = postData.comments.comment_info.length;
+
+    if (maxpage > 1) {
+        if (page > 1) {
+            midPageControl.appendChild(createMidFloorPrevPage(postData));
+        }
+        if (page < maxpage) {
+            midPageControl.appendChild(createMidFloorNextPage(postData));
+        }
+        let pages = document.createTextNode('第 ' + page + ' 页，共 ' + maxpage + ' 页');
+        midPageControl.appendChild(pages);
+    }
+    midfloor.appendChild(midPageControl);
+}
+
+
+function createMidFloorNextPage(postData) {
+    let a = document.createElement('a');
+    a.setAttribute('onclick', 'updateMidFloor("' + postData.content.post_id + '-btn","+");');
+    a.innerText = '下一页';
+    return a;
+}
+
+function createMidFloorPrevPage(postData) {
+    let a = document.createElement('a');
+    a.setAttribute('onclick', 'updateMidFloor("' + postData.content.post_id + '-btn","-");');
+    a.innerText = '上一页';
+    return a;
 }

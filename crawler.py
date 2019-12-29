@@ -3,6 +3,8 @@ import os
 import shutil
 import urllib.parse
 import argparse
+import re
+import math
 
 import imagedownload
 
@@ -10,12 +12,12 @@ from bs4 import BeautifulSoup
 import requests
 
 
-img = 0
+imgs = []
 emotions = []
 
 
 def download_image(content, folder, postimgdir, smileydir):
-    global img
+    global imgs
     global emotions
     if content == None:
         return
@@ -25,19 +27,19 @@ def download_image(content, folder, postimgdir, smileydir):
 
         # 图片
         for j in innerSoup.find_all(class_="BDE_Image"):
-            filename = "{0}.jpg".format(img)
-            imagedownload.download_image(
-                j.attrs['src'], os.path.join(folder, postimgdir, filename))
+            filename = os.path.basename(j.attrs['src']).split('?')[0]
+            if filename not in imgs:
+                imagedownload.download_image(
+                    j.attrs['src'], os.path.join(folder, postimgdir, filename))
             j.attrs['src'] = postimgdir + filename
-            img += 1
 
         # 自定义表情包
         for j in innerSoup.find_all(class_="BDE_Meme"):
-            filename = "{0}.jpg".format(img)
-            imagedownload.download_image(
-                j.attrs['src'], os.path.join(folder, postimgdir, filename))
+            filename = os.path.basename(j.attrs['src']).split('?')[0]
+            if filename not in emotions:
+                imagedownload.download_image(
+                    j.attrs['src'], os.path.join(folder, postimgdir, filename))
             j.attrs['src'] = postimgdir + filename
-            img += 1
 
         # 默认表情
         for j in innerSoup.find_all(class_="BDE_Smiley"):
@@ -76,12 +78,18 @@ def convert_link(content, folder, postimgdir, smileydir):
         return content
 
 
+def getinnerhtml(data):
+    return data[data.find(">")+1:data.rfind("</")]
+
+
 def download(no, see_lz, max_page):
     thread = {
-        'pages' : []
+        'pages': []
     }
     usernames = []
     smiley = []
+
+    timere = r'\d\d\d\d-\d\d-\d\d \d\d:\d\d'
 
     page = 1
 
@@ -113,8 +121,14 @@ def download(no, see_lz, max_page):
         thread['title'] = soup.select('#j_core_title_wrap > h3')[
             0].attrs['title']
 
-        for i in soup.find_all(class_='l_post l_post_bright j_l_post clearfix'):
-            post = json.loads(i.attrs['data-field'])
+        floor = 0
+        timetxt = soup.find_all(class_='tail-info')
+        time = re.findall(timere, str(timetxt))
+
+        pdata = soup.find_all(class_='l_post l_post_bright j_l_post clearfix')
+
+        for i in range(len(pdata)):
+            post = json.loads(pdata[i].attrs['data-field'])
 
             # 检测发帖人
             username = post['author']['user_name']
@@ -132,6 +146,8 @@ def download(no, see_lz, max_page):
                 post['content']['content'], folder, postimgdir, smileydir)
 
             post['comments'] = None
+
+            post['time'] = time[i]
 
             posts.append(post)
 
@@ -163,6 +179,50 @@ def download(no, see_lz, max_page):
                 if element['content']['post_id'] == int(i):
                     print('添加id为{0}的楼中楼回复'.format(i))
                     posts[j]['comments'] = midfloor['data']['comment_list'][i]
+                    posts[j]['comments']['comment_info'] = [
+                        posts[j]['comments']['comment_info']]
+
+                    midpages = math.ceil(
+                        midfloor['data']['comment_list'][i]['comment_num']/midfloor['data']['comment_list'][i]['comment_list_num'])
+
+                    if(midpages > 1):
+                        for page in range(2, midpages+1):
+                            r3 = requests.get(
+                                'https://tieba.baidu.com/p/comment?tid={0}&pid={1}&pn={2}'.format(no, i, page))
+                            soup2 = BeautifulSoup(r3.text, "html.parser")
+
+                            username2 = soup2.find_all(
+                                class_='lzl_single_post j_lzl_s_p first_no_border')
+                            username2.extend(soup2.find_all(
+                                class_='lzl_single_post j_lzl_s_p'))
+                            content = soup2.find_all(class_='lzl_content_main')
+                            time2 = soup2.find_all(class_='lzl_time')
+
+                            posts[j]['comments']['comment_info'].append([])
+
+                            for k in range(len(username2)):
+                                rep = {
+                                    "thread_id": no,
+                                    "post_id": i,
+                                    "comment_id": None,
+                                    "username": None,
+                                    "user_id": None,
+                                    "now_time": None,
+                                    "content": None,
+                                }
+                                rep['content'] = getinnerhtml(str(content[k]))
+                                ud = json.loads(
+                                    username2[k].attrs['data-field'])
+                                rep['username'] = ud['user_name']
+                                rep['comment_id'] = ud['spid']
+                                if ud['user_name'] not in usernames:
+                                    imagedownload.download_avatar(
+                                        ud['user_name'], ud['portrait'], folder + avatardir + ud['user_name'] + '.jpg')
+                                    usernames.append(
+                                        ud['user_name'])
+                                rep['now_time'] = getinnerhtml(str(time2[k]))
+                                midfloor['data']['comment_list'][i]['comment_info'][page-1].append(
+                                    rep)
 
         for i in midfloor['data']['user_list']:
 
@@ -199,10 +259,13 @@ def download(no, see_lz, max_page):
 
 
 if __name__ == "__main__":
-    parser=argparse.ArgumentParser()
-    parser.add_argument('-t','--tid',type=str,help='thread id',required=True)
-    parser.add_argument('-s','--see_lz',type=int,help='see lz. 0 or 1. default=0.',default=0)
-    parser.add_argument('-p','--pages',type=int,help='pages to download. default=1.',default=1)
-    args=parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-t', '--tid', type=str,
+                        help='thread id', required=True)
+    parser.add_argument('-s', '--see_lz', type=int,
+                        help='see lz. 0 or 1. default=0.', default=0)
+    parser.add_argument('-p', '--pages', type=int,
+                        help='pages to download. default=1.', default=1)
+    args = parser.parse_args()
 
-    download(args.tid,args.see_lz,args.pages)
+    download(args.tid, args.see_lz, args.pages)

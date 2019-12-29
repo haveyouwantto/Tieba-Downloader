@@ -16,8 +16,7 @@ hr {
 	text-decoration:none;
 	margin:4px 2px;
 	cursor:pointer;
-	border-radius:4px;
-	box-shadow:0 8px 16px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+	border-radius:5px;
 	-webkit-transition-duration:0.4s;
 	/* Safari */
     transition-duration:0.4s;
@@ -56,9 +55,10 @@ hr {
 a{
 	color: rgb(130, 192, 255);
 	max-width: 100%;
+	cursor: pointer;
 }
 a:visited{
-	color: rgb(174, 191, 207);
+	color: rgb(209, 233, 255);
 }
 .operations{
 	margin: 10px;
@@ -103,9 +103,13 @@ a:visited{
 .floor{
 	margin-left:8px;
 }
-.floornum{
+.floorinfo{
     font-size: 12px;
-    color: rgb(133, 133, 133);
+	color: rgb(133, 133, 133);
+	display: flex;    
+}
+.floortime{
+	margin-left: 8px;
 }
 .post .text {
 	background-color:#147419;
@@ -148,15 +152,9 @@ a:visited{
 	border-radius:5px 5px 5px 5px;
 }
 
-
-.midpost a{
-	color: #26e730;
-	max-width: 100%;
-}
-.midpost a:visited{
-	color: #9edfa1;
-}
-
 .expand{
-	cursor: pointer;
+	margin-top: 5px;
+}
+.midpagecontrol *{
+	margin-right: 10px;
 }
