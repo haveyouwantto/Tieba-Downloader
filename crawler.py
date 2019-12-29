@@ -222,7 +222,7 @@ def download(no, see_lz, max_page):
                                     usernames.append(
                                         ud['user_name'])
                                 rep['now_time'] = getinnerhtml(str(time2[k]))
-                                midfloor['data']['comment_list'][i]['comment_info'][page-1].append(
+                                posts[j]['comments']['comment_info'].append(
                                     rep)
 
         for i in midfloor['data']['user_list']:
