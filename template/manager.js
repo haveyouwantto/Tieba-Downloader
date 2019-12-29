@@ -205,9 +205,13 @@ function expand(id) {
         element.innerText = '\u25b2 收起';
         toExpand.style.maxHeight = 'min-content';
     } else {
+        let span=document.getElementById('posts');
+        let lastHeight=toExpand.clientHeight;
         element.setAttribute('expanded', '0');
         element.innerText = '\u25bc 展开';
         toExpand.style.maxHeight = '180px';
+        let currHeight=toExpand.clientHeight;
+        span.scrollTop+=currHeight-lastHeight;
     }
 }
 
