@@ -186,9 +186,10 @@ def download(no, see_lz, max_page):
                         midfloor['data']['comment_list'][i]['comment_num']/midfloor['data']['comment_list'][i]['comment_list_num'])
 
                     if(midpages > 1):
-                        for page in range(2, midpages+1):
+                        for midpage in range(2, midpages+1):
+                            print('正在下载第{0}页的楼中楼{1}页'.format(page,midpage))
                             r3 = requests.get(
-                                'https://tieba.baidu.com/p/comment?tid={0}&pid={1}&pn={2}'.format(no, i, page))
+                                'https://tieba.baidu.com/p/comment?tid={0}&pid={1}&pn={2}'.format(no, i, midpages))
                             soup2 = BeautifulSoup(r3.text, "html.parser")
 
                             username2 = soup2.find_all(
