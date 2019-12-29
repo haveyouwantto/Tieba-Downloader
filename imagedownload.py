@@ -3,13 +3,13 @@ import requests
 
 def download_file(url, filename):
     r = requests.get(url, stream=True)
-    print('服务器返回 '+str(r.status_code))  # 返回状态码
+    #print('服务器返回 '+str(r.status_code))  # 返回状态码
     if r.status_code == 200:
         open(filename, 'wb').write(r.content)
     else:
         return
     del r
-    print('下载成功')
+    #print('下载成功')
 
 
 def download_avatar(username, id, filename):
