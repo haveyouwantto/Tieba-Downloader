@@ -220,22 +220,31 @@ function updateMidFloor(id, operation) {
     switch (operation) {
         case '+':
             if (currpage < maxpage) {
-                toUpdate.innerHTML = '';
-                toUpdate.setAttribute('page', currpage + 1);
                 updateMidPosts(toUpdate, currpage + 1);
             }
             break;
         case '-':
             if (currpage > 1) {
-                toUpdate.innerHTML = '';
-                toUpdate.setAttribute('page', currpage - 1);
                 updateMidPosts(toUpdate, currpage - 1);
             }
+            break;
+        case '<':
+            updateMidPosts(toUpdate, 1);
+            break;
+        case '>':
+            updateMidPosts(toUpdate, maxpage);
             break;
     }
 }
 
 function updateMidPosts(midfloor, page) {
+    
+    let span=document.getElementById('posts');
+    let lastHeight=midfloor.clientHeight;
+    
+    midfloor.innerHTML='';
+    midfloor.setAttribute('page', page);
+
     let postData = index[midfloor.getAttribute('index')];
     let midPageControl = document.createElement('div');
     midPageControl.setAttribute('class', 'midpagecontrol');
@@ -252,10 +261,17 @@ function updateMidPosts(midfloor, page) {
         if (page < maxpage) {
             midPageControl.appendChild(createMidFloorNextPage(postData));
         }
+        if (maxpage > 2) {
+            midPageControl.appendChild(createMidFloorFirstPage(postData));
+            midPageControl.appendChild(createMidFloorLastPage(postData));
+        }
         let pages = document.createTextNode('第 ' + page + ' 页，共 ' + maxpage + ' 页');
         midPageControl.appendChild(pages);
     }
     midfloor.appendChild(midPageControl);
+
+    let currHeight=midfloor.clientHeight;
+    span.scrollTop+=currHeight-lastHeight;
 }
 
 
@@ -270,5 +286,19 @@ function createMidFloorPrevPage(postData) {
     let a = document.createElement('a');
     a.setAttribute('onclick', 'updateMidFloor("' + postData.content.post_id + '-btn","-");');
     a.innerText = '上一页';
+    return a;
+}
+
+function createMidFloorFirstPage(postData) {
+    let a = document.createElement('a');
+    a.setAttribute('onclick', 'updateMidFloor("' + postData.content.post_id + '-btn","<");');
+    a.innerText = '首页';
+    return a;
+}
+
+function createMidFloorLastPage(postData) {
+    let a = document.createElement('a');
+    a.setAttribute('onclick', 'updateMidFloor("' + postData.content.post_id + '-btn",">");');
+    a.innerText = '尾页';
     return a;
 }

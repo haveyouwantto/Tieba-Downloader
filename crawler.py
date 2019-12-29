@@ -12,12 +12,12 @@ from bs4 import BeautifulSoup
 import requests
 
 
-imgs = []
+img = 0
 emotions = []
 
 
 def download_image(content, folder, postimgdir, smileydir):
-    global imgs
+    global img
     global emotions
     if content == None:
         return
@@ -27,18 +27,18 @@ def download_image(content, folder, postimgdir, smileydir):
 
         # 图片
         for j in innerSoup.find_all(class_="BDE_Image"):
-            filename = os.path.basename(j.attrs['src']).split('?')[0]
-            if filename not in imgs:
-                imagedownload.download_image(
-                    j.attrs['src'], os.path.join(folder, postimgdir, filename))
+            filename = "{0}.jpg".format(img)
+            imagedownload.download_image(
+                j.attrs['src'], os.path.join(folder, postimgdir, filename))
+            img += 1
             j.attrs['src'] = postimgdir + filename
 
         # 自定义表情包
         for j in innerSoup.find_all(class_="BDE_Meme"):
-            filename = os.path.basename(j.attrs['src']).split('?')[0]
-            if filename not in emotions:
-                imagedownload.download_image(
-                    j.attrs['src'], os.path.join(folder, postimgdir, filename))
+            filename = "{0}.jpg".format(img)
+            imagedownload.download_image(
+                j.attrs['src'], os.path.join(folder, postimgdir, filename))
+            img += 1
             j.attrs['src'] = postimgdir + filename
 
         # 默认表情
@@ -187,9 +187,9 @@ def download(no, see_lz, max_page):
 
                     if(midpages > 1):
                         for midpage in range(2, midpages+1):
-                            print('正在下载第{0}页的楼中楼{1}页'.format(page,midpage))
+                            print('正在下载第{0}页的楼中楼{1}页'.format(page, midpage))
                             r3 = requests.get(
-                                'https://tieba.baidu.com/p/comment?tid={0}&pid={1}&pn={2}'.format(no, i, midpages))
+                                'https://tieba.baidu.com/p/comment?tid={0}&pid={1}&pn={2}'.format(no, i, midpage))
                             soup2 = BeautifulSoup(r3.text, "html.parser")
 
                             username2 = soup2.find_all(
@@ -222,7 +222,7 @@ def download(no, see_lz, max_page):
                                     usernames.append(
                                         ud['user_name'])
                                 rep['now_time'] = getinnerhtml(str(time2[k]))
-                                posts[j]['comments']['comment_info'].append(
+                                posts[j]['comments']['comment_info'][midpage-1].append(
                                     rep)
 
         for i in midfloor['data']['user_list']:
