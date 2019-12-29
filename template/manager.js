@@ -273,11 +273,8 @@ function updateMidPosts(midfloor, page) {
         midPageControl.appendChild(pages);
     }
     midfloor.appendChild(midPageControl);
-
-    let currHeight=midfloor.clientHeight;
-    span.scrollTop+=currHeight-lastHeight;
+    span.scrollTop-=lastHeight;
 }
-
 
 function createMidFloorNextPage(postData) {
     let a = document.createElement('a');
