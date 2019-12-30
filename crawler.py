@@ -30,26 +30,26 @@ def download_image(content, folder, postimgdir, smileydir):
         for j in innerSoup.find_all(class_="BDE_Image"):
             filename = "{0}.jpg".format(img)
             imagedownload.download_image(
-                j.attrs['src'], os.path.join(folder, postimgdir, filename))
+                j['src'], os.path.join(folder, postimgdir, filename))
             img += 1
-            j.attrs['src'] = postimgdir + filename
+            j['src'] = postimgdir + filename
 
         # 自定义表情包
         for j in innerSoup.find_all(class_="BDE_Meme"):
             filename = "{0}.jpg".format(img)
             imagedownload.download_image(
-                j.attrs['src'], os.path.join(folder, postimgdir, filename))
+                j['src'], os.path.join(folder, postimgdir, filename))
             img += 1
-            j.attrs['src'] = postimgdir + filename
+            j['src'] = postimgdir + filename
 
         # 默认表情
         for j in innerSoup.find_all(class_="BDE_Smiley"):
-            filename = os.path.basename(j.attrs['src']).split('?')[0]
+            filename = os.path.basename(j['src']).split('?')[0]
             if filename not in emotions:
                 imagedownload.download_smiley(
-                    j.attrs['src'], os.path.join(folder, smileydir, filename))
+                    j['src'], os.path.join(folder, smileydir, filename))
                 emotions.append(filename)
-            j.attrs['src'] = smileydir + filename
+            j['src'] = smileydir + filename
         return str(innerSoup)
     else:
         return content
@@ -75,19 +75,22 @@ def convert_link(content, folder, postimgdir, smileydir):
 
         # 链接
         for j in innerSoup.find_all(class_="j-no-opener-url"):
-            print('转换链接: '+j.attrs['href'])
-            j.attrs['href'] = "redirect.html?url=" + \
+            print('转换链接: '+j['href'])
+            j['href'] = "redirect.html?url=" + \
                 urllib.parse.quote(j.text)
 
         # @人
         for j in innerSoup.find_all(class_="at"):
-            print('转换@人: '+j.attrs['href'])
-            if j.attrs['username'] == '':
-                j.attrs['href'] = 'http://tieba.baidu.com/home/main?un=' + \
+            print('转换@人: '+j['href'])
+            del j['onclick']
+            del j['onmouseout']
+            del j['onmouseover']
+            if j['username'] == '':
+                j['href'] = 'http://tieba.baidu.com/home/main?un=' + \
                     j.contents[0].string
             else:
-                j.attrs['href'] = 'http://tieba.baidu.com/home/main?un=' + \
-                    j.attrs['username']
+                j['href'] = 'http://tieba.baidu.com/home/main?un=' + \
+                    j['username']
         return str(innerSoup)
     else:
         return content
@@ -137,7 +140,7 @@ def download(no, see_lz, max_page):
         soup = BeautifulSoup(response, "html.parser")
 
         thread['title'] = soup.select('#j_core_title_wrap > h3')[
-            0].attrs['title']
+            0]['title']
 
         floor = 0
         timetxt = soup.find_all(class_='tail-info')
@@ -146,7 +149,7 @@ def download(no, see_lz, max_page):
         pdata = soup.find_all(class_='l_post l_post_bright j_l_post clearfix')
 
         for i in range(len(pdata)):
-            post = json.loads(pdata[i].attrs['data-field'])
+            post = json.loads(pdata[i]['data-field'])
 
             # 检测发帖人
             username = post['author']['user_name']
@@ -238,7 +241,7 @@ def download(no, see_lz, max_page):
                                     rep['content'], folder, postimgdir, smileydir)
 
                                 ud = json.loads(
-                                    username2[k].attrs['data-field'])
+                                    username2[k]['data-field'])
                                 rep['username'] = ud['user_name']
                                 rep['comment_id'] = ud['spid']
                                 download_avatar(
