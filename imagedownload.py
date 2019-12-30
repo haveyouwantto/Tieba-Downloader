@@ -28,7 +28,7 @@ def download_image(url, filename):
         url.split('/')[len(url.split('/'))-1]
     print('下载贴子图片: '+url2)
     r = requests.get(url2, stream=True)
-    print('服务器返回 '+str(r.status_code))  # 返回状态码
+    #print('服务器返回 '+str(r.status_code))  # 返回状态码
     if r.status_code == 200:
         open(filename, 'wb').write(r.content)
     else:

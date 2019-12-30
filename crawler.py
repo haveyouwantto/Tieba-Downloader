@@ -14,6 +14,7 @@ import requests
 
 img = 0
 emotions = []
+usernames = []
 
 
 def download_image(content, folder, postimgdir, smileydir):
@@ -54,6 +55,16 @@ def download_image(content, folder, postimgdir, smileydir):
         return content
 
 
+def download_avatar(username, portrait, folder, avatardir):
+    global usernames
+
+    if username not in usernames:
+        imagedownload.download_avatar(
+            username, portrait, folder + avatardir + username + '.jpg')
+        usernames.append(
+            username)
+
+
 def convert_link(content, folder, postimgdir, smileydir):
     if content == None:
         return
@@ -71,15 +82,22 @@ def convert_link(content, folder, postimgdir, smileydir):
         # @人
         for j in innerSoup.find_all(class_="at"):
             print('转换@人: '+j.attrs['href'])
-            j.attrs['href'] = 'http://tieba.baidu.com/home/main?un=' + \
-                j.attrs['username']
+            if j.attrs['username'] == '':
+                j.attrs['href'] = 'http://tieba.baidu.com/home/main?un=' + \
+                    j.contents[0].string
+            else:
+                j.attrs['href'] = 'http://tieba.baidu.com/home/main?un=' + \
+                    j.attrs['username']
         return str(innerSoup)
     else:
         return content
 
 
 def getinnerhtml(data):
-    return data[data.find(">")+1:data.rfind("</")]
+    try:
+        return data[data.find(">")+1:data.rfind("</")]
+    except:
+        return ""
 
 
 def download(no, see_lz, max_page):
@@ -132,10 +150,9 @@ def download(no, see_lz, max_page):
 
             # 检测发帖人
             username = post['author']['user_name']
-            if username not in usernames:
-                imagedownload.download_avatar(
-                    username, post['author']['portrait'], folder + avatardir + username + '.jpg')
-                usernames.append(username)
+
+            download_avatar(
+                username, post['author']['portrait'], folder, avatardir)
 
             # 下载贴子图片
             post['content']['content'] = download_image(
@@ -212,15 +229,20 @@ def download(no, see_lz, max_page):
                                     "content": None,
                                 }
                                 rep['content'] = getinnerhtml(str(content[k]))
+
+                                rep['content'] = download_image(
+                                    rep['content'], folder, postimgdir, smileydir)
+
+                                # 转换贴子链接
+                                rep['content'] = convert_link(
+                                    rep['content'], folder, postimgdir, smileydir)
+
                                 ud = json.loads(
                                     username2[k].attrs['data-field'])
                                 rep['username'] = ud['user_name']
                                 rep['comment_id'] = ud['spid']
-                                if ud['user_name'] not in usernames:
-                                    imagedownload.download_avatar(
-                                        ud['user_name'], ud['portrait'], folder + avatardir + ud['user_name'] + '.jpg')
-                                    usernames.append(
-                                        ud['user_name'])
+                                download_avatar(
+                                    ud['user_name'], ud['portrait'], folder, avatardir)
                                 rep['now_time'] = getinnerhtml(str(time2[k]))
                                 posts[j]['comments']['comment_info'][midpage-1].append(
                                     rep)
@@ -231,16 +253,12 @@ def download(no, see_lz, max_page):
             username = element['user_name']
 
             try:
-                if username not in usernames:
-                    imagedownload.download_avatar(
-                        username, element['portrait'], folder + avatardir + username + '.jpg')
-                    usernames.append(username)
+                download_avatar(
+                    username, element['portrait'], folder, avatardir)
             except:
                 nickname = element['nickname']
-                if nickname not in usernames:
-                    imagedownload.download_avatar(
-                        nickname, element['portrait'], folder + avatardir + nickname + '.jpg')
-                    usernames.append(nickname)
+                download_avatar(
+                    nickname, element['portrait'], folder, avatardir)
 
         thread['pages'].append(posts)
 
