@@ -28,28 +28,37 @@ def download_image(content, folder, postimgdir, smileydir):
 
         # 图片
         for j in innerSoup.find_all(class_="BDE_Image"):
-            filename = "{0}.jpg".format(img)
-            imagedownload.download_image(
-                j['src'], os.path.join(folder, postimgdir, filename))
-            img += 1
-            j['src'] = postimgdir + filename
+            try:
+                filename = "{0}.jpg".format(img)
+                imagedownload.download_image(
+                    j['src'], os.path.join(folder, postimgdir, filename))
+                img += 1
+                j['src'] = postimgdir + filename
+            except:
+                print('无法下载'+filename)
 
         # 自定义表情包
         for j in innerSoup.find_all(class_="BDE_Meme"):
-            filename = "{0}.jpg".format(img)
-            imagedownload.download_image(
-                j['src'], os.path.join(folder, postimgdir, filename))
-            img += 1
-            j['src'] = postimgdir + filename
+            try:
+                filename = "{0}.jpg".format(img)
+                imagedownload.download_image(
+                    j['src'], os.path.join(folder, postimgdir, filename))
+                img += 1
+                j['src'] = postimgdir + filename
+            except:
+                print('无法下载'+filename)
 
         # 默认表情
         for j in innerSoup.find_all(class_="BDE_Smiley"):
-            filename = os.path.basename(j['src']).split('?')[0]
-            if filename not in emotions:
-                imagedownload.download_smiley(
-                    j['src'], os.path.join(folder, smileydir, filename))
-                emotions.append(filename)
-            j['src'] = smileydir + filename
+            try:
+                filename = os.path.basename(j['src']).split('?')[0]
+                if filename not in emotions:
+                    imagedownload.download_smiley(
+                        j['src'], os.path.join(folder, smileydir, filename))
+                    emotions.append(filename)
+                j['src'] = smileydir + filename
+            except:
+                print('无法下载'+filename)
         return str(innerSoup)
     else:
         return content
@@ -59,10 +68,13 @@ def download_avatar(username, portrait, folder, avatardir):
     global usernames
 
     if username not in usernames:
-        imagedownload.download_avatar(
-            username, portrait, folder + avatardir + username + '.jpg')
-        usernames.append(
-            username)
+        try:
+            imagedownload.download_avatar(
+                username, portrait, folder + avatardir + username + '.jpg')
+            usernames.append(
+                username)
+        except:
+            print('无法下载'+username)
 
 
 def convert_link(content, folder, postimgdir, smileydir):
@@ -139,8 +151,7 @@ def download(no, see_lz, max_page):
 
         soup = BeautifulSoup(response, "html.parser")
 
-        thread['title'] = soup.select('#j_core_title_wrap > h3')[
-            0]['title']
+        thread['title'] = soup.select('#j_core_title_wrap > h3')[0]['title']
 
         floor = 0
         timetxt = soup.find_all(class_='tail-info')
