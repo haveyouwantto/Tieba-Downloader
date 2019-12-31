@@ -252,16 +252,21 @@ def download(no, see_lz, max_page):
 
         for i in midfloor['data']['user_list']:
 
-            element = midfloor['data']['user_list'][i]
-            username = element['user_name']
-
             try:
-                download_avatar(
-                    username, element['portrait'], folder, avatardir)
+
+                element = midfloor['data']['user_list'][i]
+                username = element['user_name']
+
+                try:
+                    download_avatar(
+                        username, element['portrait'], folder, avatardir)
+                except:
+                    nickname = element['nickname']
+                    download_avatar(
+                        nickname, element['portrait'], folder, avatardir)
+
             except:
-                nickname = element['nickname']
-                download_avatar(
-                    nickname, element['portrait'], folder, avatardir)
+                pass
 
         thread['pages'].append(posts)
 
