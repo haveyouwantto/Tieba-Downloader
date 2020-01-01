@@ -173,10 +173,9 @@ function createMidFloor(postData) {
 function createExpandButton(postData) {
     let expand = document.createElement('a');
     expand.innerText = '\u25bc 展开';
-    expand.setAttribute('value', postData.content.post_id + '-mid');
     expand.setAttribute('id', postData.content.post_id + '-btn');
     expand.setAttribute('class', 'expand');
-    expand.setAttribute('onclick', 'expand("' + postData.content.post_id + '-btn");');
+    expand.setAttribute('onclick', 'expand("' + postData.content.post_id + '");');
     expand.setAttribute('expanded', '0');
     return expand;
 }
@@ -198,26 +197,25 @@ function createMidAvatar(username) {
 }
 
 function expand(id) {
-    let element = document.getElementById(id);
-    let toExpand = document.getElementById(element.getAttribute('value'));
+    let element = document.getElementById(id + '-btn');
+    let toExpand = document.getElementById(id + '-mid');
     if (element.getAttribute('expanded') == '0') {
         element.setAttribute('expanded', '1');
         element.innerText = '\u25b2 收起';
         toExpand.style.maxHeight = 'min-content';
     } else {
-        let span=document.getElementById('posts');
-        let lastHeight=toExpand.clientHeight;
+        let span = document.getElementById('posts');
+        let lastHeight = toExpand.clientHeight;
         element.setAttribute('expanded', '0');
         element.innerText = '\u25bc 展开';
         toExpand.style.maxHeight = '180px';
-        let currHeight=toExpand.clientHeight;
-        span.scrollTop+=currHeight-lastHeight;
+        let currHeight = toExpand.clientHeight;
+        span.scrollTop += currHeight - lastHeight;
     }
 }
 
 function updateMidFloor(id, operation) {
-    let element = document.getElementById(id);
-    let toUpdate = document.getElementById(element.getAttribute('value'));
+    let toUpdate = document.getElementById(id + '-mid');
     let currpage = parseInt(toUpdate.getAttribute('page'));
     let maxpage = parseInt(toUpdate.getAttribute('maxpage'));
 
@@ -242,11 +240,11 @@ function updateMidFloor(id, operation) {
 }
 
 function updateMidPosts(midfloor, page) {
-    
-    let span=document.getElementById('posts');
-    let lastHeight=midfloor.clientHeight;
-    
-    midfloor.innerHTML='';
+
+    let span = document.getElementById('posts');
+    let lastHeight = midfloor.clientHeight;
+
+    midfloor.innerHTML = '';
     midfloor.setAttribute('page', page);
 
     let postData = index[midfloor.getAttribute('index')];
@@ -257,49 +255,87 @@ function updateMidPosts(midfloor, page) {
         midfloor.appendChild(createMidPost(element));
     }
     let maxpage = postData.comments.comment_info.length;
+    let postId = postData.content.post_id;
 
     if (maxpage > 1) {
         if (page > 1) {
-            midPageControl.appendChild(createMidFloorPrevPage(postData));
+            midPageControl.appendChild(createMidFloorPrevPage(postId));
         }
         if (page < maxpage) {
-            midPageControl.appendChild(createMidFloorNextPage(postData));
+            midPageControl.appendChild(createMidFloorNextPage(postId));
         }
         if (maxpage > 2) {
-            midPageControl.appendChild(createMidFloorFirstPage(postData));
-            midPageControl.appendChild(createMidFloorLastPage(postData));
+            if (page > 1) {
+                midPageControl.appendChild(createMidFloorFirstPage(postId));
+            }
+            if (page < maxpage) {
+                midPageControl.appendChild(createMidFloorLastPage(postId));
+            }
+            midPageControl.appendChild(createMidFloorJumpPage(postId, page, maxpage));
+            midPageControl.appendChild(createMidFloorJumpPageBtn(postId));
         }
         let pages = document.createTextNode('第 ' + page + ' 页，共 ' + maxpage + ' 页');
         midPageControl.appendChild(pages);
     }
     midfloor.appendChild(midPageControl);
-    span.scrollTop-=lastHeight;
+    span.scrollTop -= lastHeight;
 }
 
-function createMidFloorNextPage(postData) {
+function midjump(id) {
+    let toUpdate = document.getElementById(id + '-mid');
+    let maxpage = parseInt(toUpdate.getAttribute('maxpage'));
+
+    let toJump = parseInt(document.getElementById(id + '-jmp').value);
+
+    if (toJump > maxpage) toJump = maxpage;
+    else if (toJump < 0) toJump = 0;
+    updateMidPosts(toUpdate, toJump);
+}
+
+function createMidFloorJumpPage(postId, currPage, maxPage) {
+    let field = document.createElement('input');
+    field.setAttribute('type', 'number');
+    field.setAttribute('max', maxPage);
+    field.setAttribute('class', 'input');
+    field.setAttribute('size', 1);
+    field.setAttribute('value', currPage);
+    field.setAttribute('id', postId + '-jmp');
+    return field;
+}
+
+function createMidFloorJumpPageBtn(postId) {
+    let field = document.createElement('input');
+    field.setAttribute('type', 'submit');
+    field.setAttribute('class', 'btn');
+    field.setAttribute('onclick', 'midjump("' + postId + '");');
+    field.setAttribute('value', '跳页');
+    return field;
+}
+
+function createMidFloorNextPage(postId) {
     let a = document.createElement('a');
-    a.setAttribute('onclick', 'updateMidFloor("' + postData.content.post_id + '-btn","+");');
+    a.setAttribute('onclick', 'updateMidFloor("' + postId + '","+");');
     a.innerText = '下一页';
     return a;
 }
 
-function createMidFloorPrevPage(postData) {
+function createMidFloorPrevPage(postId) {
     let a = document.createElement('a');
-    a.setAttribute('onclick', 'updateMidFloor("' + postData.content.post_id + '-btn","-");');
+    a.setAttribute('onclick', 'updateMidFloor("' + postId + '","-");');
     a.innerText = '上一页';
     return a;
 }
 
-function createMidFloorFirstPage(postData) {
+function createMidFloorFirstPage(postId) {
     let a = document.createElement('a');
-    a.setAttribute('onclick', 'updateMidFloor("' + postData.content.post_id + '-btn","<");');
+    a.setAttribute('onclick', 'updateMidFloor("' + postId + '","<");');
     a.innerText = '首页';
     return a;
 }
 
-function createMidFloorLastPage(postData) {
+function createMidFloorLastPage(postId) {
     let a = document.createElement('a');
-    a.setAttribute('onclick', 'updateMidFloor("' + postData.content.post_id + '-btn",">");');
+    a.setAttribute('onclick', 'updateMidFloor("' + postId + '",">");');
     a.innerText = '尾页';
     return a;
 }

@@ -1,9 +1,13 @@
 html {
 	background-color:#1b2b34;
 	color:#D8DEE9;
+	height: 100vh;
 }
 hr {
 	border:1px solid #5FB3B3;
+}
+.page{
+	max-height: 100vh;
 }
 .center{
 	text-align:center;
@@ -39,6 +43,9 @@ hr {
 	border-color: #5FB3B3;
 	border-width: 1px;
 	padding: 5px;
+}
+.input[type=number]{
+	max-width: 10vh;
 }
 .url{
 	background-color: #343D46;

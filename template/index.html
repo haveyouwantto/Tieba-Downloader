@@ -18,9 +18,9 @@
     <span id="posts"></span>
     <input type="button" class="btn" onclick="prev();" value="上一页" id="prev" disabled="true">
     <input type="button" class="btn" onclick="next();" value="下一页" id="next">
-    <div id="pagenum"></div>
     <input type="number" class="input" size="1" value="1" min="1" id="jump" required="true">
     <input type="submit" class="btn" value="跳页" onclick="jump();">
+    <div id="pagenum"></div>
     <script src="manager.js"></script>
     <script src="data.js"></script>
     <script>
@@ -37,6 +37,9 @@
             if (pn > px) pn = px;
             else if (pn < 0) pn = 0;
             setPage(thread.pages, pn);
+        }
+        function first() {
+            setPage(thread.pages, 1);
         }
     </script>
 </body>
