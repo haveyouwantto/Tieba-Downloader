@@ -36,7 +36,7 @@ def download_image(content, folder, postimgdir, smileydir):
         # 图片
         for j in innerSoup.find_all(class_="BDE_Image"):
             try:
-                print('下载贴子图片: '+j['src']+'... ',end='')
+                print('下载贴子图片: '+j['src']+'... ', end='')
                 filename = "{0}.jpg".format(img)
                 imagedownload.download_image(
                     j['src'], os.path.join(folder, postimgdir, filename))
@@ -49,7 +49,7 @@ def download_image(content, folder, postimgdir, smileydir):
         # 自定义表情包
         for j in innerSoup.find_all(class_="BDE_Meme"):
             try:
-                print('下载贴子图片: '+j['src']+'... ',end='')
+                print('下载贴子图片: '+j['src']+'... ', end='')
                 filename = "{0}.jpg".format(img)
                 imagedownload.download_image(
                     j['src'], os.path.join(folder, postimgdir, filename))
@@ -61,8 +61,8 @@ def download_image(content, folder, postimgdir, smileydir):
 
         # 默认表情
         for j in innerSoup.find_all(class_="BDE_Smiley"):
-            try: 
-                print('下载表情... ',end='')
+            try:
+                print('下载表情... ', end='')
                 filename = os.path.basename(j['src']).split('?')[0]
                 if filename not in emotions:
                     imagedownload.download_smiley(
@@ -82,7 +82,7 @@ def download_avatar(username, portrait, folder, avatardir):
 
     if username not in usernames:
         try:
-            print('下载'+username+'的头像... ',end='')
+            print('下载'+username+'的头像... ', end='')
             imagedownload.download_avatar(
                 username, portrait, folder + avatardir + username + '.jpg')
             usernames.append(
@@ -161,8 +161,24 @@ class Downloader:
 
     def download(self):
         while self.page <= self.max_page:
-            p = self.getBasePage(self.page)
-            self.getMidPosts(p)
+            p = None
+            for retry in range(3):
+                try:
+                    print('正在下载第' + str(self.page) + '页... ', end='')
+                    p = self.getBasePage(self.page)
+                    print(Fore.GREEN+'SUCCESS'+Fore.WHITE)
+                    break
+                except:
+                    print(Fore.RED+'FAILED'+Fore.WHITE)
+
+            for retry in range(3):
+                try:
+                    print('获取楼中楼信息... ', end='')
+                    self.getMidPosts(p)
+                    print(Fore.GREEN+'SUCCESS'+Fore.WHITE)
+                    break
+                except:
+                    print(Fore.RED+'FAILED'+Fore.WHITE)
 
             self.thread['pages'].append(p)
             self.page += 1
@@ -171,7 +187,6 @@ class Downloader:
         posts = []
         url = 'https://tieba.baidu.com/p/{0}?see_lz={1}&pn={2}'.format(
             self.tid, self.see_lz, page)
-        print('正在下载第' + str(page) + '页... ', end='')
 
         r = requests.get(url)
         response = r.text  # 服务器返回响应
@@ -215,133 +230,128 @@ class Downloader:
         return posts
 
     def getMidPosts(self, posts):
-        for retry in range(3):
+        r2 = requests.get(
+            'https://tieba.baidu.com/p/totalComment?tid={0}&see_lz={1}&pn={2}'.format(self.tid, self.see_lz, self.page))
+        response = r2.text  # 服务器返回响应
+
+        midfloor = json.loads(response)
+
+        print(Fore.GREEN+'SUCCESS'+Fore.WHITE)
+
+        for i in midfloor['data']['comment_list']:
+            midpost = midfloor['data']['comment_list'][i]['comment_info']
+
+            for j in range(len(midpost)):
+                element = midpost[j]
+                element['content'] = download_image(
+                    element['content'], self.folder, self.postimgdir, self.smileydir)
+
+                # 转换贴子链接
+                element['content'] = convert_link(
+                    element['content'], self.folder, self.postimgdir, self.smileydir)
+
+                midpost[j] = element
+
+            midfloor['data']['comment_list'][i]['comment_info'] = midpost
+
+            for j in range(len(posts)):
+                element = posts[j]
+                if element['content']['post_id'] == int(i):
+                    print('添加id为{0}的楼中楼回复... '.format(i), end='')
+                    posts[j]['comments'] = midfloor['data']['comment_list'][i]
+                    posts[j]['comments']['comment_info'] = [
+                        posts[j]['comments']['comment_info']]
+
+                    print(Fore.GREEN+'SUCCESS'+Fore.WHITE)
+
+                    midpages = math.ceil(
+                        midfloor['data']['comment_list'][i]['comment_num'] / midfloor['data']['comment_list'][i][
+                            'comment_list_num'])
+
+                    if (midpages > 1):
+                        for midpage in range(2, midpages + 1):
+                            print('正在下载第{0}页的楼中楼{1}页... '.format(
+                                self.page, midpage), end='')
+                            for retry2 in range(3):
+                                try:
+                                    r3 = requests.get(
+                                        'https://tieba.baidu.com/p/comment?tid={0}&pid={1}&pn={2}'.format(self.tid, i,
+                                                                                                          midpage))
+                                    soup2 = BeautifulSoup(
+                                        r3.text, "html.parser")
+
+                                    username2 = soup2.find_all(
+                                        class_='lzl_single_post j_lzl_s_p first_no_border')
+                                    username2.extend(soup2.find_all(
+                                        class_='lzl_single_post j_lzl_s_p'))
+                                    content = soup2.find_all(
+                                        class_='lzl_content_main')
+                                    time2 = soup2.find_all(
+                                        class_='lzl_time')
+
+                                    posts[j]['comments']['comment_info'].append(
+                                        [])
+
+                                    for k in range(len(username2)):
+                                        rep = {
+                                            "thread_id": self.tid,
+                                            "post_id": i,
+                                            "comment_id": None,
+                                            "username": None,
+                                            "user_id": None,
+                                            "now_time": None,
+                                            "content": None,
+                                        }
+                                        rep['content'] = getinnerhtml(
+                                            str(content[k]))
+
+                                        rep['content'] = download_image(
+                                            rep['content'], self.folder, self.postimgdir, self.smileydir)
+
+                                        # 转换贴子链接
+                                        rep['content'] = convert_link(
+                                            rep['content'], self.folder, self.postimgdir, self.smileydir)
+
+                                        ud = json.loads(
+                                            username2[k]['data-field'])
+                                        rep['username'] = ud['user_name']
+                                        rep['comment_id'] = ud['spid']
+                                        download_avatar(
+                                            ud['user_name'], ud['portrait'], self.folder, self.avatardir)
+                                        rep['now_time'] = getinnerhtml(
+                                            str(time2[k]))
+                                        posts[j]['comments']['comment_info'][midpage - 1].append(
+                                            rep)
+                                    print(Fore.GREEN +
+                                          'SUCCESS'+Fore.WHITE)
+                                    break
+                                except:
+                                    print(Fore.RED+'FAILED'+Fore.WHITE)
+
+        for i in midfloor['data']['user_list']:
+
             try:
-                print('获取楼中楼信息... ', end='')
-                r2 = requests.get(
-                    'https://tieba.baidu.com/p/totalComment?tid={0}&see_lz={1}&pn={2}'.format(self.tid, self.see_lz, self.page))
-                response = r2.text  # 服务器返回响应
 
-                midfloor = json.loads(response)
+                element = midfloor['data']['user_list'][i]
+                username = element['user_name']
 
-                print(Fore.GREEN+'SUCCESS'+Fore.WHITE)
+                try:
+                    download_avatar(
+                        username, element['portrait'], self.folder, self.avatardir)
+                except:
+                    nickname = element['nickname']
+                    download_avatar(
+                        nickname, element['portrait'], self.folder, self.avatardir)
 
-                for i in midfloor['data']['comment_list']:
-                    midpost = midfloor['data']['comment_list'][i]['comment_info']
-
-                    for j in range(len(midpost)):
-                        element = midpost[j]
-                        element['content'] = download_image(
-                            element['content'], self.folder, self.postimgdir, self.smileydir)
-
-                        # 转换贴子链接
-                        element['content'] = convert_link(
-                            element['content'], self.folder, self.postimgdir, self.smileydir)
-
-                        midpost[j] = element
-
-                    midfloor['data']['comment_list'][i]['comment_info'] = midpost
-
-                    for j in range(len(posts)):
-                        element = posts[j]
-                        if element['content']['post_id'] == int(i):
-                            print('添加id为{0}的楼中楼回复... '.format(i), end='')
-                            posts[j]['comments'] = midfloor['data']['comment_list'][i]
-                            posts[j]['comments']['comment_info'] = [
-                                posts[j]['comments']['comment_info']]
-
-                            print(Fore.GREEN+'SUCCESS'+Fore.WHITE)
-
-                            midpages = math.ceil(
-                                midfloor['data']['comment_list'][i]['comment_num'] / midfloor['data']['comment_list'][i][
-                                    'comment_list_num'])
-
-                            if (midpages > 1):
-                                for midpage in range(2, midpages + 1):
-                                    print('正在下载第{0}页的楼中楼{1}页... '.format(
-                                        self.page, midpage), end='')
-                                    for retry2 in range(3):
-                                        try:
-                                            r3 = requests.get(
-                                                'https://tieba.baidu.com/p/comment?tid={0}&pid={1}&pn={2}'.format(self.tid, i,
-                                                                                                                  midpage))
-                                            soup2 = BeautifulSoup(
-                                                r3.text, "html.parser")
-
-                                            username2 = soup2.find_all(
-                                                class_='lzl_single_post j_lzl_s_p first_no_border')
-                                            username2.extend(soup2.find_all(
-                                                class_='lzl_single_post j_lzl_s_p'))
-                                            content = soup2.find_all(
-                                                class_='lzl_content_main')
-                                            time2 = soup2.find_all(
-                                                class_='lzl_time')
-
-                                            posts[j]['comments']['comment_info'].append(
-                                                [])
-
-                                            for k in range(len(username2)):
-                                                rep = {
-                                                    "thread_id": self.tid,
-                                                    "post_id": i,
-                                                    "comment_id": None,
-                                                    "username": None,
-                                                    "user_id": None,
-                                                    "now_time": None,
-                                                    "content": None,
-                                                }
-                                                rep['content'] = getinnerhtml(
-                                                    str(content[k]))
-
-                                                rep['content'] = download_image(
-                                                    rep['content'], self.folder, self.postimgdir, self.smileydir)
-
-                                                # 转换贴子链接
-                                                rep['content'] = convert_link(
-                                                    rep['content'], self.folder, self.postimgdir, self.smileydir)
-
-                                                ud = json.loads(
-                                                    username2[k]['data-field'])
-                                                rep['username'] = ud['user_name']
-                                                rep['comment_id'] = ud['spid']
-                                                download_avatar(
-                                                    ud['user_name'], ud['portrait'], self.folder, self.avatardir)
-                                                rep['now_time'] = getinnerhtml(
-                                                    str(time2[k]))
-                                                posts[j]['comments']['comment_info'][midpage - 1].append(
-                                                    rep)
-                                            print(Fore.GREEN +
-                                                  'SUCCESS'+Fore.WHITE)
-                                            break
-                                        except:
-                                            print(Fore.RED+'FAILED'+Fore.WHITE)
-
-                for i in midfloor['data']['user_list']:
-
-                    try:
-
-                        element = midfloor['data']['user_list'][i]
-                        username = element['user_name']
-
-                        try:
-                            download_avatar(
-                                username, element['portrait'], self.folder, self.avatardir)
-                        except:
-                            nickname = element['nickname']
-                            download_avatar(
-                                nickname, element['portrait'], self.folder, self.avatardir)
-
-                    except:
-                        pass
             except:
-                print(Fore.RED+'FAILED'+Fore.WHITE)
+                pass
 
     def save(self):
 
         # 复制模板文件
         print('复制文件... ', end='')
         for file in os.listdir('template/'):
-                shutil.copyfile('template/' + file, self.folder + file)
+            shutil.copyfile('template/' + file, self.folder + file)
 
         f = open(self.folder + 'data.js', 'w')
         f.write('let thread=')
